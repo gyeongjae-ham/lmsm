@@ -1,6 +1,5 @@
 package com.lms.api.example.controller
 
-import com.lms.core.domain.example.service.ExampleService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 
