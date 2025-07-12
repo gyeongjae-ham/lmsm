@@ -1,8 +1,8 @@
 package com.lms.core.domain
 
-import com.lms.core.domain.problem.domain.ProblemRatioCalculator
-import com.lms.core.domain.problem.domain.exception.InvalidValueException
-import com.lms.enum.Level
+import com.lms.core.domain.problem.domain.problem.ProblemRatioCalculator
+import com.lms.core.domain.problem.domain.problem.exception.InvalidValueException
+import com.lms.core.enum.Level
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest

@@ -1,4 +1,4 @@
-package com.lms.enum
+package com.lms.core.enum
 
 enum class ProblemType {
     ALL,

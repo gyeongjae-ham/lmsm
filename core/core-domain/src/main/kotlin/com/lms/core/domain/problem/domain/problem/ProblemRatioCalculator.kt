@@ -1,7 +1,7 @@
-package com.lms.core.domain.problem.domain
+package com.lms.core.domain.problem.domain.problem
 
-import com.lms.core.domain.problem.domain.exception.InvalidValueException
-import com.lms.enum.Level
+import com.lms.core.domain.problem.domain.problem.exception.InvalidValueException
+import com.lms.core.enum.Level
 import kotlin.math.roundToInt
 
 data class RatioCalculateResult(
