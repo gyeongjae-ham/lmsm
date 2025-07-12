@@ -5,7 +5,7 @@ import com.lms.core.enum.ProblemType
 
 data class ProblemGetRequest(
     val totalCount: Int,
-    val unitCodeList: String,
+    val unitCodeList: List<String>,
     val level: Level,
     val problemType: ProblemType
 )
