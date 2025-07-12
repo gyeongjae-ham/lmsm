@@ -2,7 +2,8 @@ rootProject.name = "roouty"
 
 include(
     "core:core-api",
-    "core:core-enum",
+    "core:core-common",
+    "core:core-domain",
     "storage:db-core",
     "support:logging",
     "support:monitoring",
@@ -27,5 +28,3 @@ pluginManagement {
         }
     }
 }
-
-include("core:core-domain")
