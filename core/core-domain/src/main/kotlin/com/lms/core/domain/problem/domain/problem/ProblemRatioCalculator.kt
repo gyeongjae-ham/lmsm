@@ -2,6 +2,7 @@ package com.lms.core.domain.problem.domain.problem
 
 import com.lms.core.domain.problem.domain.problem.exception.InvalidValueException
 import com.lms.core.enum.Level
+import org.springframework.stereotype.Component
 import kotlin.math.roundToInt
 
 data class RatioCalculateResult(
@@ -10,6 +11,7 @@ data class RatioCalculateResult(
     val highCount: Int = 0
 )
 
+@Component
 class ProblemRatioCalculator {
     companion object {
         private val LOW_RATIO = Triple(0.5, 0.3, 0.2)
