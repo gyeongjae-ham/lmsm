@@ -1,6 +1,6 @@
 package com.lms.core_domain.problem
 
-import com.lms.core_domain.enum.Level
+import com.lms.core_common.enum.Level
 import com.lms.core_domain.problem.domain.ProblemRatioCalculator
 import com.lms.core_domain.problem.domain.exception.InvalidValueException
 import org.assertj.core.api.Assertions

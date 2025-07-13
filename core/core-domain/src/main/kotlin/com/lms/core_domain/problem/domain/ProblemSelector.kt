@@ -1,6 +1,6 @@
 package com.lms.core_domain.problem.domain
 
-import com.lms.core_domain.enum.Level
+import com.lms.core_common.enum.Level
 
 class ProblemSelector(
     private val ratioResult: RatioCalculateResult,

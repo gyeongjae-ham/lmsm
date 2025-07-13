@@ -1,4 +1,4 @@
-package com.lms.core_domain.exception
+package com.lms.core_common.exception
 
 import org.springframework.http.HttpStatus
 

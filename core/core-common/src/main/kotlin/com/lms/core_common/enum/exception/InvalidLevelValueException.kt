@@ -1,6 +1,6 @@
-package com.lms.core_domain.enum.exception
+package com.lms.core_common.enum.exception
 
-import com.lms.core_domain.exception.BusinessException
+import com.lms.core_common.exception.BusinessException
 
 class InvalidLevelValueException(
     levelValue: Int,

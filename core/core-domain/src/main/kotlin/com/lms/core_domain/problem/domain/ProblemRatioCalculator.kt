@@ -1,6 +1,6 @@
 package com.lms.core_domain.problem.domain
 
-import com.lms.core_domain.enum.Level
+import com.lms.core_common.enum.Level
 import com.lms.core_domain.problem.domain.exception.InvalidValueException
 import org.springframework.stereotype.Component
 import kotlin.math.roundToInt

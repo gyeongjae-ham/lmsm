@@ -1,6 +1,6 @@
 package com.lms.core_domain.problem
 
-import com.lms.core_domain.enum.ProblemType
+import com.lms.core_common.enum.ProblemType
 import com.lms.core_domain.problem.domain.Problem
 import com.lms.core_domain.problem.domain.ProblemSelector
 import com.lms.core_domain.problem.domain.RatioCalculateResult

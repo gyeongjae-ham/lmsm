@@ -1,4 +1,4 @@
-package com.lms.core_domain.response
+package com.lms.core_common.response
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import org.springframework.http.HttpStatus

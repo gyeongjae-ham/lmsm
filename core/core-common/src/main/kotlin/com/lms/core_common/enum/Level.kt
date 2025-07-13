@@ -1,6 +1,6 @@
-package com.lms.core_domain.enum
+package com.lms.core_common.enum
 
-import com.lms.core_domain.enum.exception.InvalidLevelValueException
+import com.lms.core_common.enum.exception.InvalidLevelValueException
 
 private const val MAX_LEVEL_VALUE = 5
 private const val MIN_LEVEL_VALUE = 1
