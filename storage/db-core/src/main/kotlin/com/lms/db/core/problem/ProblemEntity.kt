@@ -27,9 +27,6 @@ class ProblemEntity(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
 
-    @Column(name = "problem_id", nullable = false, unique = true)
-    val problemId: Long,
-
     @Column(name = "unit_code", nullable = false, length = 20)
     val unitCode: String,
 
@@ -45,7 +42,7 @@ class ProblemEntity(
 ) : BaseEntity() {
     fun toDomain(): Problem {
         return Problem(
-            problemId = Problem.ProblemId(problemId),
+            problemId = Problem.ProblemId(id),
             unitCode = unitCode,
             level = level,
             problemType = problemType,

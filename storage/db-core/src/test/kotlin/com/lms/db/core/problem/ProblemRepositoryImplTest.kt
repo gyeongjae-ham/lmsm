@@ -24,10 +24,10 @@ class ProblemRepositoryImplTest {
         problemJpaRepository.deleteAll()
 
         val problems = listOf(
-            ProblemEntity(problemId = 1, unitCode = "A01", level = 1, problemType = ProblemType.SELECTION, answer = "1"),
-            ProblemEntity(problemId = 2, unitCode = "A01", level = 2, problemType = ProblemType.SUBJECTIVE, answer = "2"),
-            ProblemEntity(problemId = 3, unitCode = "B01", level = 3, problemType = ProblemType.SELECTION, answer = "3"),
-            ProblemEntity(problemId = 4, unitCode = "C01", level = 4, problemType = ProblemType.SELECTION, answer = "4")
+            ProblemEntity(unitCode = "A01", level = 1, problemType = ProblemType.SELECTION, answer = "1"),
+            ProblemEntity(unitCode = "A01", level = 2, problemType = ProblemType.SUBJECTIVE, answer = "2"),
+            ProblemEntity(unitCode = "B01", level = 3, problemType = ProblemType.SELECTION, answer = "3"),
+            ProblemEntity(unitCode = "C01", level = 4, problemType = ProblemType.SELECTION, answer = "4")
         )
         problemJpaRepository.saveAll(problems)
     }
