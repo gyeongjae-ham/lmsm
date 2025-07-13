@@ -1,4 +1,4 @@
-rootProject.name = "roouty"
+rootProject.name = "lms"
 
 include(
     "core:core-api",
