@@ -1,9 +1,9 @@
 package com.lms.api.problem
 
-import com.lms.core.domain.problem.domain.problem.exception.InvalidValueException
-import com.lms.core.domain.problem.domain.problem.response.ProblemFilterResponse
-import com.lms.core.domain.problem.service.ProblemGetService
-import com.lms.core.enum.ProblemType
+import com.lms.core_domain.enum.ProblemType
+import com.lms.core_domain.problem.domain.exception.InvalidValueException
+import com.lms.core_domain.problem.domain.response.ProblemFilterResponse
+import com.lms.core_domain.problem.service.ProblemGetService
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.verify

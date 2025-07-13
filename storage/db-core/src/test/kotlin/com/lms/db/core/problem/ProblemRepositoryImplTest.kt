@@ -1,6 +1,6 @@
 package com.lms.db.core.problem
 
-import com.lms.core.enum.ProblemType
+import com.lms.core_domain.enum.ProblemType
 import com.lms.db.core.config.JpaConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach

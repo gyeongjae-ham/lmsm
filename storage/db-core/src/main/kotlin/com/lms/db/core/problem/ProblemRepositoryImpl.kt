@@ -1,8 +1,8 @@
 package com.lms.db.core.problem
 
-import com.lms.core.domain.problem.domain.problem.Problem
-import com.lms.core.domain.problem.repository.ProblemRepository
-import com.lms.core.enum.ProblemType
+import com.lms.core_domain.enum.ProblemType
+import com.lms.core_domain.problem.domain.Problem
+import com.lms.core_domain.problem.repository.ProblemRepository
 import org.springframework.stereotype.Repository
 
 @Repository

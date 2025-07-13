@@ -1,7 +1,7 @@
 package com.lms.enum
 
-import com.lms.core.enum.Level
-import com.lms.core.enum.exception.InvalidLevelValueException
+import com.lms.core_domain.enum.Level
+import com.lms.core_domain.enum.exception.InvalidLevelValueException
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource

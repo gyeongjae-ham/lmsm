@@ -1,8 +1,8 @@
 package com.lms.config
 
-import com.lms.core.exception.BusinessException
-import com.lms.core.response.ApiResponse
-import com.lms.core.response.ValidationError
+import com.lms.core_domain.exception.BusinessException
+import com.lms.core_domain.response.ApiResponse
+import com.lms.core_domain.response.ValidationError
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus

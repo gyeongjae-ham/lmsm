@@ -1,6 +1,6 @@
 package com.lms.db.core.problem
 
-import com.lms.core.enum.ProblemType
+import com.lms.core_domain.enum.ProblemType
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface ProblemJpaRepository : JpaRepository<ProblemEntity, Long> {
