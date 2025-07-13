@@ -1,9 +1,8 @@
-rootProject.name = "lms"
+rootProject.name = "roouty"
 
 include(
     "core:core-api",
-    "core:core-common",
-    "core:core-domain",
+    "core:core-enum",
     "storage:db-core",
     "support:logging",
     "support:monitoring",
@@ -28,3 +27,5 @@ pluginManagement {
         }
     }
 }
+
+include("core:core-domain")
