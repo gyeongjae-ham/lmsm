@@ -1,6 +1,6 @@
 package com.lms.core_domain.problem.domain.response
 
-import com.lms.core_domain.enum.ProblemType
+import com.lms.core_common.enum.ProblemType
 
 data class ProblemFilterResponse(
     val id: Long,

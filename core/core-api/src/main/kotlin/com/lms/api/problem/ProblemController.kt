@@ -3,7 +3,7 @@ package com.lms.api.problem
 import com.lms.core_domain.problem.domain.request.ProblemGetRequest
 import com.lms.core_domain.problem.domain.response.ProblemFilterResponse
 import com.lms.core_domain.problem.service.ProblemGetService
-import com.lms.core_domain.response.ApiResponse
+import com.lms.core_common.response.ApiResponse
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.ModelAttribute

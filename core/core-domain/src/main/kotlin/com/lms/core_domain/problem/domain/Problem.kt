@@ -1,7 +1,7 @@
 package com.lms.core_domain.problem.domain
 
-import com.lms.core_domain.enum.ProblemType
-import com.lms.core_domain.exception.BusinessException
+import com.lms.core_common.enum.ProblemType
+import com.lms.core_common.exception.BusinessException
 import com.lms.core_domain.problem.domain.response.ProblemFilterResponse
 
 data class Problem(

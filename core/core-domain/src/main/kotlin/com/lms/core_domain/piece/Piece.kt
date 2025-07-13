@@ -1,6 +1,6 @@
 package com.lms.core_domain.piece
 
-import com.lms.core_domain.exception.BusinessException
+import com.lms.core_common.exception.BusinessException
 import com.lms.core_domain.problem.domain.Problem
 
 private const val PROBLEM_MAX_SIZE = 50

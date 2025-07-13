@@ -1,6 +1,6 @@
 package com.lms.enum
 
-import com.lms.core_domain.enum.ProblemType
+import com.lms.core_common.enum.ProblemType
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

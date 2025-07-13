@@ -1,6 +1,6 @@
 package com.lms.api.problem
 
-import com.lms.core_domain.enum.ProblemType
+import com.lms.core_common.enum.ProblemType
 import com.lms.core_domain.problem.domain.exception.InvalidValueException
 import com.lms.core_domain.problem.domain.response.ProblemFilterResponse
 import com.lms.core_domain.problem.service.ProblemGetService
