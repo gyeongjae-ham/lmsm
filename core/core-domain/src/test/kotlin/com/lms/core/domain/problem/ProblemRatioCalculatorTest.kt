@@ -1,4 +1,4 @@
-package com.lms.core.domain
+package com.lms.core.domain.problem
 
 import com.lms.core.domain.problem.domain.problem.ProblemRatioCalculator
 import com.lms.core.domain.problem.domain.problem.exception.InvalidValueException
