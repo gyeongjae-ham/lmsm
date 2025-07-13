@@ -1,6 +1,5 @@
 package com.lms.db.core.problem
 
-import com.lms.core.domain.problem.domain.problem.Problem
 import com.lms.core.enum.ProblemType
 import com.lms.db.core.config.JpaConfig
 import org.assertj.core.api.Assertions.assertThat
@@ -49,7 +48,7 @@ class ProblemRepositoryImplTest {
         val result = problemRepository.getWithUnitCodeListAndType(unitCodeList, problemType)
 
         assertThat(result).hasSize(2)
-        assertThat(result.map { it.id }).containsExactlyInAnyOrder(Problem.ProblemId(1L), Problem.ProblemId(3L))
+        assertThat(result.map { it.unitCode }).containsExactlyInAnyOrder("A01", "B01")
         assertThat(result.all { it.problemType == ProblemType.SELECTION }).isTrue()
     }
 
