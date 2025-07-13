@@ -1,6 +1,7 @@
 package com.lms.api.problem
 
 import com.lms.core.domain.problem.domain.problem.request.ProblemGetRequest
+import com.lms.core.domain.problem.domain.problem.response.ProblemFilterResponse
 import com.lms.core.domain.problem.service.ProblemGetService
 import com.lms.core.response.ApiResponse
 import jakarta.validation.Valid
@@ -17,9 +18,9 @@ class ProblemController(
     @GetMapping
     fun getProblems(
         @Valid @ModelAttribute request: ProblemGetRequest
-    ): ApiResponse<Unit> {
-        problemGetService.getProblemsWithCondition(request)
-        return ApiResponse.success()
+    ): ApiResponse<List<ProblemFilterResponse>> {
+        val problemFilterResponses = problemGetService.getProblemsWithCondition(request)
+        return ApiResponse.success(data = problemFilterResponses)
     }
 }
 
