@@ -8,9 +8,6 @@ spring:
       - db-core.yml
   web.resources.add-mappings: false
 
-api:
-  base-path: "/api/v1"
-
 server:
   tomcat:
     max-connections: 20000
