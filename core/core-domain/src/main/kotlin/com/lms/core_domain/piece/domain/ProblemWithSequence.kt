@@ -1,5 +1,6 @@
 package com.lms.core_domain.piece.domain
 
+import com.lms.core_domain.piece.domain.response.PieceAssignResponse
 import com.lms.core_domain.piece.domain.response.ProblemWithSequenceResponse
 import com.lms.core_domain.problem.domain.Problem
 
@@ -26,3 +27,13 @@ fun ProblemWithSequence.toResponse(): ProblemWithSequenceResponse {
         answer = this.problem.answer
     )
 }
+
+fun PieceAssignmentResult.toAssignResponse(pieceName: String): PieceAssignResponse {
+    return PieceAssignResponse(
+        pieceId = this.pieceId.value,
+        pieceName = pieceName,
+        assignedStudentCount = this.getAssignmentCount(),
+        skippedStudentCount = this.getSkippedCount(),
+    )
+}
+
