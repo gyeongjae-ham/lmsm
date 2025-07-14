@@ -5,6 +5,7 @@ import com.lms.core_domain.piece.domain.response.PieceCreateResponse
 import com.lms.core_domain.piece.domain.response.ProblemOrderResponse
 import com.lms.core_domain.problem.domain.Problem
 import com.lms.core_domain.problem.domain.Problems
+import com.lms.core_domain.user.domain.User
 
 private const val PROBLEM_MAX_SIZE = 50
 
@@ -48,6 +49,29 @@ class Piece {
     fun getTeacherId(): Long = teacherId
     fun getProblemCount(): Int = sortedProblemsWithSequence.size
     fun getProblemsWithSequence(): List<ProblemWithSequence> = sortedProblemsWithSequence.toList()
+
+    fun assignToStudents(
+        requestTeacherId: Long,
+        studentIds: List<User.UserId>,
+        alreadyAssignedStudentIds: List<User.UserId>
+    ): PieceAssignmentResult {
+        if (teacherId != requestTeacherId) {
+            throw BusinessException("Only the teacher who created this piece can assign it to students")
+        }
+
+        if (studentIds.isEmpty()) {
+            throw BusinessException("Student IDs cannot be empty")
+        }
+
+        val alreadyAssignedIds = alreadyAssignedStudentIds.map { it.value }.toSet()
+        val newStudentIds = studentIds.filter { !alreadyAssignedIds.contains(it.value) }
+
+        return PieceAssignmentResult(
+            pieceId = this.id,
+            newAssignments = newStudentIds,
+            skippedStudents = studentIds.filter { alreadyAssignedIds.contains(it.value) }
+        )
+    }
 
     fun reorderProblem(problemId: Long, targetPosition: Int): Piece {
         if (sortedProblemsWithSequence.isEmpty()) {
