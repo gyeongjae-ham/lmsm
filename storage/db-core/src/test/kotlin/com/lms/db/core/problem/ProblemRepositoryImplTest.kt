@@ -1,17 +1,13 @@
 package com.lms.db.core.problem
 
 import com.lms.core_common.enum.ProblemType
-import com.lms.db.core.config.JpaConfig
+import com.lms.db.core.BaseRepositoryTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
-import org.springframework.context.annotation.Import
 
-@DataJpaTest
-@Import(JpaConfig::class)
-class ProblemRepositoryImplTest {
+class ProblemRepositoryImplTest : BaseRepositoryTest() {
 
     @Autowired
     private lateinit var problemJpaRepository: ProblemJpaRepository
