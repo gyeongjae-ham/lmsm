@@ -1,13 +1,17 @@
 package com.lms.db.core.piece
 
 import com.lms.core_common.enum.ProblemType
+import com.lms.core_common.exception.BusinessException
 import com.lms.core_domain.piece.domain.Piece
+import com.lms.core_domain.piece.domain.ProblemWithSequence
 import com.lms.core_domain.problem.domain.Problem
 import com.lms.core_domain.problem.domain.Problems
 import com.lms.db.core.BaseRepositoryTest
 import com.lms.db.core.problem.ProblemEntity
 import com.lms.db.core.problem.ProblemJpaRepository
+import com.lms.db.core.problem.ProblemRepositoryImpl
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -23,11 +27,14 @@ class PieceRepositoryImplTest : BaseRepositoryTest() {
     @Autowired
     private lateinit var problemJpaRepository: ProblemJpaRepository
 
+    private lateinit var problemRepositoryImpl: ProblemRepositoryImpl
+
     private lateinit var pieceRepository: PieceRepositoryImpl
 
     @BeforeEach
     fun setup() {
-        pieceRepository = PieceRepositoryImpl(pieceJpaRepository, pieceProblemJpaRepository)
+        problemRepositoryImpl = ProblemRepositoryImpl(problemJpaRepository)
+        pieceRepository = PieceRepositoryImpl(pieceJpaRepository, pieceProblemJpaRepository, problemRepositoryImpl)
 
         pieceProblemJpaRepository.deleteAll()
         pieceJpaRepository.deleteAll()
@@ -164,5 +171,143 @@ class PieceRepositoryImplTest : BaseRepositoryTest() {
         assertThat(problemsWithSequence).hasSize(2)
         assertThat(problemsWithSequence[0].sequence).isEqualTo(10)
         assertThat(problemsWithSequence[1].sequence).isEqualTo(20)
+    }
+
+    @Test
+    fun `존재하는 Piece ID로 조회 시 정상적으로 반환된다`() {
+        val problemEntities = listOf(
+            ProblemEntity(unitCode = "uc1580", level = 1, problemType = ProblemType.SELECTION, answer = "1"),
+            ProblemEntity(unitCode = "uc1580", level = 2, problemType = ProblemType.SUBJECTIVE, answer = "2")
+        )
+        val savedProblems = problemJpaRepository.saveAll(problemEntities)
+
+        val problems = listOf(
+            Problem(Problem.ProblemId(savedProblems[0].id), "uc1580", 1, ProblemType.SELECTION, "1"),
+            Problem(Problem.ProblemId(savedProblems[1].id), "uc1580", 2, ProblemType.SUBJECTIVE, "2")
+        )
+        val piece = Piece(
+            name = "조회 테스트 학습지",
+            teacherId = 1L,
+            problems = Problems(problems)
+        )
+
+        val savedPiece = pieceRepository.savePiece(piece)
+
+        val foundPiece = pieceRepository.findById(savedPiece.id)
+
+        assertThat(foundPiece.id).isEqualTo(savedPiece.id)
+        assertThat(foundPiece.getName()).isEqualTo("조회 테스트 학습지")
+        assertThat(foundPiece.getTeacherId()).isEqualTo(1L)
+        assertThat(foundPiece.getProblemCount()).isEqualTo(2)
+
+        val problemsWithSequence = foundPiece.getProblemsWithSequence()
+        assertThat(problemsWithSequence).hasSize(2)
+        assertThat(problemsWithSequence[0].sequence).isEqualTo(10)
+        assertThat(problemsWithSequence[1].sequence).isEqualTo(20)
+    }
+
+    @Test
+    fun `존재하지 않는 Piece ID로 조회 시 BusinessException이 발생한다`() {
+        val nonExistentPieceId = Piece.PieceId(999L)
+
+        assertThatThrownBy { pieceRepository.findById(nonExistentPieceId) }
+            .isInstanceOf(BusinessException::class.java)
+            .hasMessage("Piece not found")
+    }
+
+    @Test
+    fun `Piece 업데이트 시 PieceProblem 엔티티가 삭제되고 재생성된다`() {
+        val problemEntities = listOf(
+            ProblemEntity(unitCode = "uc1580", level = 1, problemType = ProblemType.SELECTION, answer = "1"),
+            ProblemEntity(unitCode = "uc1580", level = 2, problemType = ProblemType.SUBJECTIVE, answer = "2"),
+            ProblemEntity(unitCode = "uc1583", level = 3, problemType = ProblemType.SELECTION, answer = "3")
+        )
+        val savedProblems = problemJpaRepository.saveAll(problemEntities)
+
+        val problems = listOf(
+            Problem(Problem.ProblemId(savedProblems[0].id), "uc1580", 1, ProblemType.SELECTION, "1"),
+            Problem(Problem.ProblemId(savedProblems[1].id), "uc1580", 2, ProblemType.SUBJECTIVE, "2")
+        )
+        val piece = Piece(
+            name = "업데이트 테스트 학습지",
+            teacherId = 1L,
+            problems = Problems(problems)
+        )
+
+        val savedPiece = pieceRepository.savePiece(piece)
+
+        val originalPieceProblems = pieceProblemJpaRepository.findByPieceIdOrderBySequence(savedPiece.id.value)
+        assertThat(originalPieceProblems).hasSize(2)
+
+        val updatedProblemsWithSequence = listOf(
+            ProblemWithSequence(
+                problem = Problem(Problem.ProblemId(savedProblems[2].id), "uc1583", 3, ProblemType.SELECTION, "3"),
+                sequence = 5
+            ),
+            ProblemWithSequence(
+                problem = Problem(Problem.ProblemId(savedProblems[0].id), "uc1580", 1, ProblemType.SELECTION, "1"),
+                sequence = 10
+            ),
+            ProblemWithSequence(
+                problem = Problem(Problem.ProblemId(savedProblems[1].id), "uc1580", 2, ProblemType.SUBJECTIVE, "2"),
+                sequence = 20
+            )
+        )
+
+        val updatedPiece = Piece(
+            pieceId = savedPiece.id,
+            name = "업데이트 테스트 학습지",
+            teacherId = 1L,
+            problemsWithSequence = updatedProblemsWithSequence
+        )
+
+        pieceRepository.savePiece(updatedPiece)
+
+        val updatedPieceProblems = pieceProblemJpaRepository.findByPieceIdOrderBySequence(savedPiece.id.value)
+        assertThat(updatedPieceProblems).hasSize(3)
+        assertThat(updatedPieceProblems[0].sequence).isEqualTo(5)
+        assertThat(updatedPieceProblems[0].problemId).isEqualTo(savedProblems[2].id)
+        assertThat(updatedPieceProblems[1].sequence).isEqualTo(10)
+        assertThat(updatedPieceProblems[1].problemId).isEqualTo(savedProblems[0].id)
+        assertThat(updatedPieceProblems[2].sequence).isEqualTo(20)
+        assertThat(updatedPieceProblems[2].problemId).isEqualTo(savedProblems[1].id)
+    }
+
+    @Test
+    fun `조회된 Piece의 문제들이 sequence 순서로 정렬되어 반환된다`() {
+        val problemEntities = listOf(
+            ProblemEntity(unitCode = "uc1580", level = 1, problemType = ProblemType.SELECTION, answer = "1"),
+            ProblemEntity(unitCode = "uc1580", level = 2, problemType = ProblemType.SUBJECTIVE, answer = "2"),
+            ProblemEntity(unitCode = "uc1583", level = 3, problemType = ProblemType.SELECTION, answer = "3")
+        )
+        val savedProblems = problemJpaRepository.saveAll(problemEntities)
+
+        val problems = listOf(
+            Problem(Problem.ProblemId(savedProblems[2].id), "uc1583", 3, ProblemType.SELECTION, "3"),
+            Problem(Problem.ProblemId(savedProblems[0].id), "uc1580", 1, ProblemType.SELECTION, "1"),
+            Problem(Problem.ProblemId(savedProblems[1].id), "uc1580", 2, ProblemType.SUBJECTIVE, "2")
+        )
+
+        val piece = Piece(
+            name = "정렬 테스트 학습지",
+            teacherId = 1L,
+            problems = Problems(problems)
+        )
+
+        val savedPiece = pieceRepository.savePiece(piece)
+        val foundPiece = pieceRepository.findById(savedPiece.id)
+
+        val problemsWithSequence = foundPiece.getProblemsWithSequence()
+        assertThat(problemsWithSequence).hasSize(3)
+
+        // 정렬된 순서로 반환되는지 확인: uc1580(level1), uc1580(level2), uc1583(level3)
+        assertThat(problemsWithSequence[0].sequence).isEqualTo(10)
+        assertThat(problemsWithSequence[0].problem.id.value).isEqualTo(savedProblems[0].id) // uc1580, level1
+
+        assertThat(problemsWithSequence[1].sequence).isEqualTo(20)
+        assertThat(problemsWithSequence[1].problem.id.value).isEqualTo(savedProblems[1].id) // uc1580, level2
+
+        assertThat(problemsWithSequence[2].sequence).isEqualTo(30)
+        assertThat(problemsWithSequence[2].problem.id.value).isEqualTo(savedProblems[2].id) // uc1583, level3
     }
 }

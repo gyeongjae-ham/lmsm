@@ -1,5 +1,6 @@
 package com.lms.db.core.piece
 
+import com.lms.core_common.exception.BusinessException
 import com.lms.core_domain.piece.domain.Piece
 import com.lms.db.core.config.BaseEntity
 import jakarta.persistence.Column
@@ -26,6 +27,11 @@ class PieceEntity(
 
 fun Piece.toEntity(): PieceEntity {
     return PieceEntity(
+        id = try {
+            this.id.value
+        } catch (e: Exception) {
+            null
+        },
         name = this.getName(),
         teacherId = this.getTeacherId(),
     )
