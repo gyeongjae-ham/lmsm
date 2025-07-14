@@ -2,12 +2,15 @@ package com.lms.api.piece
 
 import com.lms.core_common.response.ApiResponse
 import com.lms.core_domain.piece.domain.Piece
+import com.lms.core_domain.piece.domain.request.PieceAssignRequest
 import com.lms.core_domain.piece.domain.request.PieceCreateRequest
 import com.lms.core_domain.piece.domain.request.ProblemOrderUpdateRequest
+import com.lms.core_domain.piece.domain.response.PieceAssignResponse
 import com.lms.core_domain.piece.domain.response.PieceCreateResponse
 import com.lms.core_domain.piece.domain.response.ProblemOrderResponse
 import com.lms.core_domain.piece.service.PieceService
 import jakarta.validation.Valid
+import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -36,5 +39,17 @@ class PieceController(
             request = request
         )
         return ApiResponse.success(data = updatedPiece)
+    }
+
+    @PostMapping("/{pieceId}/assign")
+    fun assignToStudents(
+        @PathVariable pieceId: Long,
+        @ModelAttribute @Valid request: PieceAssignRequest
+    ): ApiResponse<PieceAssignResponse> {
+        val response = pieceService.assignToStudents(
+            pieceId = Piece.PieceId(pieceId),
+            request = request
+        )
+        return ApiResponse.success(data = response)
     }
 }
