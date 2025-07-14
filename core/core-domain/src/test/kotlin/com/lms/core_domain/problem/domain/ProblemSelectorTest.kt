@@ -1,9 +1,6 @@
-package com.lms.core_domain.problem
+package com.lms.core_domain.problem.domain
 
 import com.lms.core_common.enum.ProblemType
-import com.lms.core_domain.problem.domain.Problem
-import com.lms.core_domain.problem.domain.ProblemSelector
-import com.lms.core_domain.problem.domain.RatioCalculateResult
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test

@@ -8,12 +8,14 @@ import com.lms.core_domain.problem.domain.response.ProblemFilterResponse
 import com.lms.core_domain.problem.domain.toProblemFilterResponse
 import com.lms.core_domain.problem.repository.ProblemRepository
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class ProblemGetService(
     private val problemRatioCalculator: ProblemRatioCalculator,
     private val problemRepository: ProblemRepository
 ) {
+    @Transactional(readOnly = true)
     fun getProblemsWithCondition(request: ProblemGetRequest): List<ProblemFilterResponse> {
         val ratioResult = problemRatioCalculator.calculate(request.level, request.totalCount)
         val trimmedUnitCodeList = request.unitCodeList.map { unitCode -> unitCode.trim() }
