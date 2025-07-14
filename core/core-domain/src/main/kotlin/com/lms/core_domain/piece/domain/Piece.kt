@@ -2,6 +2,7 @@ package com.lms.core_domain.piece.domain
 
 import com.lms.core_common.exception.BusinessException
 import com.lms.core_domain.piece.domain.response.PieceCreateResponse
+import com.lms.core_domain.piece.domain.response.ProblemOrderResponse
 import com.lms.core_domain.problem.domain.Problem
 import com.lms.core_domain.problem.domain.Problems
 
@@ -149,5 +150,14 @@ fun Piece.toCreateResponse(): PieceCreateResponse {
         name = this.getName(),
         teacherId = this.getTeacherId(),
         problemCount = this.getProblemCount()
+    )
+}
+
+fun Piece.toUpdateOrderResponse(): ProblemOrderResponse {
+    return ProblemOrderResponse(
+        pieceId = this.id.value,
+        name = this.getName(),
+        problemCount = this.getProblemCount(),
+        problems = this.getProblemsWithSequence().map { it.toResponse() }
     )
 }
