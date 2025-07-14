@@ -3,14 +3,22 @@ package com.lms.core_domain.piece.service
 import com.lms.core_common.enum.ProblemType
 import com.lms.core_domain.piece.domain.Piece
 import com.lms.core_domain.piece.domain.ProblemWithSequence
+import com.lms.core_domain.piece.domain.request.PieceAssignRequest
 import com.lms.core_domain.piece.domain.request.PieceCreateRequest
 import com.lms.core_domain.piece.domain.request.ProblemOrderUpdateRequest
 import com.lms.core_domain.problem.domain.Problem
 import com.lms.core_domain.problem.domain.Problems
 import com.lms.core_domain.problem.service.ProblemFinder
+import com.lms.core_domain.studentpiece.domain.StudentPiece
+import com.lms.core_domain.studentpiece.service.StudentPieceFinder
+import com.lms.core_domain.studentpiece.service.StudentPieceSaver
+import com.lms.core_domain.user.domain.User
+import com.lms.core_domain.user.service.UserFinder
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.just
+import io.mockk.runs
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -27,12 +35,21 @@ class PieceServiceTest {
     @MockK
     private lateinit var pieceFinder: PieceFinder
 
+    @MockK
+    private lateinit var userFinder: UserFinder
+
+    @MockK
+    private lateinit var studentPieceFinder: StudentPieceFinder
+
+    @MockK
+    private lateinit var studentPieceSaver: StudentPieceSaver
+
     private lateinit var pieceService: PieceService
 
     @BeforeEach
     fun setUp() {
         MockKAnnotations.init(this)
-        pieceService = PieceService(problemFinder, pieceSaver, pieceFinder)
+        pieceService = PieceService(problemFinder, pieceSaver, pieceFinder, userFinder, studentPieceFinder, studentPieceSaver)
     }
 
     @Test
@@ -479,5 +496,136 @@ class PieceServiceTest {
 
         verify(exactly = 1) { pieceFinder.getWithId(pieceId) }
         verify(exactly = 1) { pieceSaver.savePiece(any()) }
+    }
+
+    @Test
+    fun `학습지 출제가 성공적으로 처리된다`() {
+        val pieceId = Piece.PieceId(1L)
+        val request = PieceAssignRequest(
+            teacherId = 1L,
+            studentIds = listOf(2L, 3L)
+        )
+
+        val piece = createPieceWithId(pieceId, teacherId = 1L)
+        val studentUserIds = listOf(User.UserId(2L), User.UserId(3L))
+        val alreadyAssignedStudentIds = emptyList<User.UserId>()
+        val savedStudentPieces = listOf(
+            StudentPiece(
+                studentPieceId = StudentPiece.StudentPieceId(1L),
+                studentId = User.UserId(2L),
+                pieceId = pieceId
+            ),
+            StudentPiece(
+                studentPieceId = StudentPiece.StudentPieceId(2L),
+                studentId = User.UserId(3L),
+                pieceId = pieceId
+            )
+        )
+
+        every { pieceFinder.getWithId(pieceId) } returns piece
+        every { userFinder.validateStudentsExist(studentUserIds) } just runs
+        every { studentPieceFinder.findAssignedStudentIds(studentUserIds, pieceId) } returns alreadyAssignedStudentIds
+        every { studentPieceSaver.saveAll(any()) } returns savedStudentPieces
+
+        val result = pieceService.assignToStudents(pieceId, request)
+
+        assertThat(result.pieceId).isEqualTo(1L)
+        assertThat(result.pieceName).isEqualTo("테스트 학습지")
+        assertThat(result.assignedStudentCount).isEqualTo(2)
+        assertThat(result.skippedStudentCount).isEqualTo(0)
+
+        verify { pieceFinder.getWithId(pieceId) }
+        verify { userFinder.validateStudentsExist(studentUserIds) }
+        verify { studentPieceFinder.findAssignedStudentIds(studentUserIds, pieceId) }
+        verify { studentPieceSaver.saveAll(any()) }
+    }
+
+    @Test
+    fun `이미 출제받은 학생이 있을 때 부분 출제가 처리된다`() {
+        val pieceId = Piece.PieceId(1L)
+        val request = PieceAssignRequest(
+            teacherId = 1L,
+            studentIds = listOf(2L, 3L, 4L)
+        )
+
+        val piece = createPieceWithId(pieceId, teacherId = 1L)
+        val studentUserIds = listOf(User.UserId(2L), User.UserId(3L), User.UserId(4L))
+        val alreadyAssignedStudentIds = listOf(User.UserId(2L))
+        val savedStudentPieces = listOf(
+            StudentPiece(
+                studentPieceId = StudentPiece.StudentPieceId(1L),
+                studentId = User.UserId(3L),
+                pieceId = pieceId
+            ),
+            StudentPiece(
+                studentPieceId = StudentPiece.StudentPieceId(2L),
+                studentId = User.UserId(4L),
+                pieceId = pieceId
+            )
+        )
+
+        every { pieceFinder.getWithId(pieceId) } returns piece
+        every { userFinder.validateStudentsExist(studentUserIds) } just runs
+        every { studentPieceFinder.findAssignedStudentIds(studentUserIds, pieceId) } returns alreadyAssignedStudentIds
+        every { studentPieceSaver.saveAll(any()) } returns savedStudentPieces
+
+        val result = pieceService.assignToStudents(pieceId, request)
+
+        assertThat(result.pieceId).isEqualTo(1L)
+        assertThat(result.assignedStudentCount).isEqualTo(2)
+        assertThat(result.skippedStudentCount).isEqualTo(1)
+
+        verify { pieceFinder.getWithId(pieceId) }
+        verify { userFinder.validateStudentsExist(studentUserIds) }
+        verify { studentPieceFinder.findAssignedStudentIds(studentUserIds, pieceId) }
+        verify { studentPieceSaver.saveAll(any()) }
+    }
+
+    @Test
+    fun `모든 학생이 이미 출제받은 경우 저장하지 않는다`() {
+        val pieceId = Piece.PieceId(1L)
+        val request = PieceAssignRequest(
+            teacherId = 1L,
+            studentIds = listOf(2L, 3L)
+        )
+
+        val piece = createPieceWithId(pieceId, teacherId = 1L)
+        val studentUserIds = listOf(User.UserId(2L), User.UserId(3L))
+        val alreadyAssignedStudentIds = listOf(User.UserId(2L), User.UserId(3L))
+
+        every { pieceFinder.getWithId(pieceId) } returns piece
+        every { userFinder.validateStudentsExist(studentUserIds) } just runs
+        every { studentPieceFinder.findAssignedStudentIds(studentUserIds, pieceId) } returns alreadyAssignedStudentIds
+
+        val result = pieceService.assignToStudents(pieceId, request)
+
+        assertThat(result.assignedStudentCount).isEqualTo(0)
+        assertThat(result.skippedStudentCount).isEqualTo(2)
+
+        verify { pieceFinder.getWithId(pieceId) }
+        verify { userFinder.validateStudentsExist(studentUserIds) }
+        verify { studentPieceFinder.findAssignedStudentIds(studentUserIds, pieceId) }
+        verify(exactly = 0) { studentPieceSaver.saveAll(any()) }
+    }
+
+    private fun createPieceWithId(pieceId: Piece.PieceId, teacherId: Long = 1L): Piece {
+        val problems = listOf(
+            ProblemWithSequence(
+                problem = Problem(
+                    problemId = Problem.ProblemId(1L),
+                    unitCode = "uc1580",
+                    level = 1,
+                    problemType = ProblemType.SELECTION,
+                    answer = "1"
+                ),
+                sequence = 10
+            )
+        )
+        return Piece(
+            pieceId = pieceId,
+            name = "테스트 학습지",
+            teacherId = teacherId,
+            problemsWithSequence = problems
+        )
     }
 }
