@@ -267,4 +267,96 @@ class PieceControllerTest : BaseControllerTest() {
         )
             .andExpect(status().isBadRequest)
     }
+
+    @Test
+    fun `학습지 통계 분석 API가 정상적으로 처리된다`() {
+        val pieceId = 1L
+        val teacherId = 1L
+
+        val response = com.lms.core_domain.piece.domain.response.PieceAnalyzeResponse(
+            pieceId = pieceId,
+            pieceName = "테스트 학습지",
+            teacherId = teacherId,
+            totalAssignedStudents = 2,
+            submittedStudents = 2,
+            submissionRate = 100.0,
+            studentStatistics = listOf(
+                com.lms.core_domain.piece.domain.response.StudentStatistic(
+                    studentId = 2L,
+                    totalProblems = 2,
+                    correctCount = 2,
+                    scoreRate = 100.0,
+                    hasSubmitted = true
+                ),
+                com.lms.core_domain.piece.domain.response.StudentStatistic(
+                    studentId = 3L,
+                    totalProblems = 2,
+                    correctCount = 1,
+                    scoreRate = 50.0,
+                    hasSubmitted = true
+                )
+            ),
+            problemStatistics = listOf(
+                com.lms.core_domain.piece.domain.response.ProblemStatistic(
+                    problemId = 1L,
+                    unitCode = "uc1580",
+                    level = 1,
+                    problemType = "SELECTION",
+                    totalSubmissions = 2,
+                    correctSubmissions = 2,
+                    correctRate = 100.0
+                ),
+                com.lms.core_domain.piece.domain.response.ProblemStatistic(
+                    problemId = 2L,
+                    unitCode = "uc1580",
+                    level = 2,
+                    problemType = "SUBJECTIVE",
+                    totalSubmissions = 2,
+                    correctSubmissions = 1,
+                    correctRate = 50.0
+                )
+            )
+        )
+
+        every { pieceService.analyzePiece(any(), any()) } returns response
+
+        mockMvc.perform(
+            get("/api/v1/pieces/{pieceId}/analyze", pieceId)
+                .param("teacherId", teacherId.toString())
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.data.pieceId").value(pieceId))
+            .andExpect(jsonPath("$.data.pieceName").value("테스트 학습지"))
+            .andExpect(jsonPath("$.data.teacherId").value(teacherId))
+            .andExpect(jsonPath("$.data.totalAssignedStudents").value(2))
+            .andExpect(jsonPath("$.data.submittedStudents").value(2))
+            .andExpect(jsonPath("$.data.submissionRate").value(100.0))
+            .andExpect(jsonPath("$.data.studentStatistics").isArray)
+            .andExpect(jsonPath("$.data.studentStatistics").value(org.hamcrest.Matchers.hasSize<Any>(2)))
+            .andExpect(jsonPath("$.data.problemStatistics").isArray)
+            .andExpect(jsonPath("$.data.problemStatistics").value(org.hamcrest.Matchers.hasSize<Any>(2)))
+            .andExpect(jsonPath("$.data.studentStatistics[0].studentId").value(2L))
+            .andExpect(jsonPath("$.data.studentStatistics[0].scoreRate").value(100.0))
+            .andExpect(jsonPath("$.data.studentStatistics[1].studentId").value(3L))
+            .andExpect(jsonPath("$.data.studentStatistics[1].scoreRate").value(50.0))
+            .andExpect(jsonPath("$.data.problemStatistics[0].problemId").value(1L))
+            .andExpect(jsonPath("$.data.problemStatistics[0].correctRate").value(100.0))
+            .andExpect(jsonPath("$.data.problemStatistics[1].problemId").value(2L))
+            .andExpect(jsonPath("$.data.problemStatistics[1].correctRate").value(50.0))
+    }
+
+    @Test
+    fun `권한이 없는 선생님이 학습지 통계를 조회하려고 하면 400 에러가 발생한다`() {
+        val pieceId = 1L
+        val teacherId = 2L
+
+        every { pieceService.analyzePiece(any(), any()) } throws BusinessException("학습지에 대한 권한이 없습니다.")
+
+        mockMvc.perform(
+            get("/api/v1/pieces/{pieceId}/analyze", pieceId)
+                .param("teacherId", teacherId.toString())
+        )
+            .andExpect(status().isBadRequest)
+    }
 }

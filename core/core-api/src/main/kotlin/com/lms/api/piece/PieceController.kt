@@ -8,6 +8,7 @@ import com.lms.core_domain.piece.domain.request.PieceScoreRequest
 import com.lms.core_domain.piece.domain.request.ProblemOrderUpdateRequest
 import com.lms.core_domain.piece.domain.response.PieceAssignResponse
 import com.lms.core_domain.piece.domain.response.PieceCreateResponse
+import com.lms.core_domain.piece.domain.response.PieceAnalyzeResponse
 import com.lms.core_domain.piece.domain.response.PieceProblemsResponse
 import com.lms.core_domain.piece.domain.response.PieceScoreResponse
 import com.lms.core_domain.piece.domain.response.ProblemOrderResponse
@@ -80,6 +81,18 @@ class PieceController(
         val response = pieceService.scoreAnswers(
             pieceId = Piece.PieceId(pieceId),
             request = request
+        )
+        return ApiResponse.success(data = response)
+    }
+
+    @GetMapping("/{pieceId}/analyze")
+    fun analyzePiece(
+        @PathVariable pieceId: Long,
+        @RequestParam teacherId: Long
+    ): ApiResponse<PieceAnalyzeResponse> {
+        val response = pieceService.analyzePiece(
+            pieceId = Piece.PieceId(pieceId),
+            teacherId = teacherId
         )
         return ApiResponse.success(data = response)
     }
