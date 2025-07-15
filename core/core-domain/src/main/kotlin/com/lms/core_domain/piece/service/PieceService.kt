@@ -1,5 +1,6 @@
 package com.lms.core_domain.piece.service
 
+import com.lms.core_common.exception.BusinessException
 import com.lms.core_domain.piece.domain.Piece
 import com.lms.core_domain.piece.domain.request.PieceAssignRequest
 import com.lms.core_domain.piece.domain.request.PieceCreateRequest
@@ -15,6 +16,7 @@ import com.lms.core_domain.piece.domain.toAssignResponse
 import com.lms.core_domain.piece.domain.toCreateResponse
 import com.lms.core_domain.piece.domain.toUpdateOrderResponse
 import com.lms.core_domain.problem.service.ProblemFinder
+import com.lms.core_domain.studentanswer.service.StudentAnswerFinder
 import com.lms.core_domain.studentanswer.service.StudentAnswerSaver
 import com.lms.core_domain.studentanswer.service.StudentAnswerScorer
 import com.lms.core_domain.studentpiece.domain.StudentPiece
@@ -33,7 +35,8 @@ class PieceService(
     private val studentPieceFinder: StudentPieceFinder,
     private val studentPieceSaver: StudentPieceSaver,
     private val studentAnswerScorer: StudentAnswerScorer,
-    private val studentAnswerSaver: StudentAnswerSaver
+    private val studentAnswerSaver: StudentAnswerSaver,
+    private val studentAnswerFinder: StudentAnswerFinder
 ) {
     fun create(request: PieceCreateRequest): PieceCreateResponse {
         val problems = problemFinder.getProblemsForPiece(problemIds = request.problemIds)
@@ -105,6 +108,11 @@ class PieceService(
         val studentId = User.UserId(request.studentId)
 
         studentPieceFinder.validateStudentHasPiece(studentId = studentId, pieceId = pieceId)
+
+        if (studentAnswerFinder.hasSubmittedAnswers(studentId, pieceId)) {
+            throw BusinessException("Answers have already been submitted for this piece")
+        }
+
         val piece = pieceFinder.getWithId(pieceId)
 
         val scoreResults =

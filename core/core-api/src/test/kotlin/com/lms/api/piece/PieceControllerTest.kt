@@ -1,6 +1,7 @@
 package com.lms.api.piece
 
 import com.lms.api.problem.BaseControllerTest
+import com.lms.core_common.exception.BusinessException
 import com.lms.core_domain.piece.domain.response.PieceAssignResponse
 import com.lms.core_domain.piece.domain.response.PieceProblemsResponse
 import com.lms.core_domain.piece.domain.response.PieceScoreResponse
@@ -163,7 +164,7 @@ class PieceControllerTest : BaseControllerTest() {
     fun `학습지 채점 API가 정상적으로 처리된다`() {
         val pieceId = 1L
         val studentId = 2L
-        
+
         val response = PieceScoreResponse(
             pieceId = pieceId,
             studentId = studentId,
@@ -232,6 +233,32 @@ class PieceControllerTest : BaseControllerTest() {
                 "answers": []
             }
         """.trimIndent()
+
+        mockMvc.perform(
+            put("/api/v1/pieces/{pieceId}/score", pieceId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `이미 답변을 제출한 학습지는 재채점할 수 없다`() {
+        val pieceId = 1L
+        val studentId = 2L
+        val requestBody = """
+            {
+                "studentId": $studentId,
+                "answers": [
+                    {
+                        "problemId": 1,
+                        "studentAnswer": "정답1"
+                    }
+                ]
+            }
+        """.trimIndent()
+
+        every { pieceService.scoreAnswers(any(), any()) } throws BusinessException("Answers have already been submitted for this piece")
 
         mockMvc.perform(
             put("/api/v1/pieces/{pieceId}/score", pieceId)

@@ -10,9 +10,10 @@ import com.lms.core_domain.piece.domain.request.ProblemOrderUpdateRequest
 import com.lms.core_domain.problem.domain.Problem
 import com.lms.core_domain.problem.domain.Problems
 import com.lms.core_domain.problem.service.ProblemFinder
-import com.lms.core_domain.studentpiece.domain.StudentPiece
+import com.lms.core_domain.studentanswer.service.StudentAnswerFinder
 import com.lms.core_domain.studentanswer.service.StudentAnswerSaver
 import com.lms.core_domain.studentanswer.service.StudentAnswerScorer
+import com.lms.core_domain.studentpiece.domain.StudentPiece
 import com.lms.core_domain.studentpiece.service.StudentPieceFinder
 import com.lms.core_domain.studentpiece.service.StudentPieceSaver
 import com.lms.core_domain.user.domain.User
@@ -54,12 +55,25 @@ class PieceServiceTest {
     @MockK
     private lateinit var studentAnswerSaver: StudentAnswerSaver
 
+    @MockK
+    private lateinit var studentAnswerFinder: StudentAnswerFinder
+
     private lateinit var pieceService: PieceService
 
     @BeforeEach
     fun setUp() {
         MockKAnnotations.init(this)
-        pieceService = PieceService(problemFinder, pieceSaver, pieceFinder, userFinder, studentPieceFinder, studentPieceSaver, studentAnswerScorer, studentAnswerSaver)
+        pieceService = PieceService(
+            problemFinder,
+            pieceSaver,
+            pieceFinder,
+            userFinder,
+            studentPieceFinder,
+            studentPieceSaver,
+            studentAnswerScorer,
+            studentAnswerSaver,
+            studentAnswerFinder
+        )
     }
 
     @Test
@@ -644,6 +658,88 @@ class PieceServiceTest {
 
         verify { studentPieceFinder.validateStudentHasPiece(studentId, pieceId) }
         verify { pieceFinder.getWithId(pieceId) }
+    }
+
+    @Test
+    fun `학습지 채점이 성공적으로 처리된다`() {
+        val pieceId = Piece.PieceId(1L)
+        val studentId = User.UserId(2L)
+        val request = com.lms.core_domain.piece.domain.request.PieceScoreRequest(
+            studentId = studentId.value,
+            answers = listOf(
+                com.lms.core_domain.piece.domain.request.StudentAnswerRequest(
+                    problemId = 1L,
+                    studentAnswer = "정답1"
+                )
+            )
+        )
+
+        val piece = createPieceWithId(pieceId, teacherId = 1L)
+        val scoreResults = listOf(
+            com.lms.core_domain.piece.domain.response.ScoreResultResponse(
+                problemId = 1L,
+                studentAnswer = "정답1",
+                correctAnswer = "정답1",
+                isCorrect = true
+            ) to com.lms.core_domain.studentanswer.domain.StudentAnswer(
+                studentId = studentId,
+                pieceId = pieceId,
+                problemId = com.lms.core_domain.problem.domain.Problem.ProblemId(1L),
+                studentAnswer = "정답1",
+                isCorrect = true
+            )
+        )
+
+        every { studentPieceFinder.validateStudentHasPiece(studentId, pieceId) } just runs
+        every { studentAnswerFinder.hasSubmittedAnswers(studentId, pieceId) } returns false
+        every { pieceFinder.getWithId(pieceId) } returns piece
+        every { studentAnswerScorer.scoreAnswers(studentId, pieceId, piece, request) } returns scoreResults
+        every { studentAnswerSaver.saveAll(any()) } returns scoreResults.map { it.second }
+
+        val result = pieceService.scoreAnswers(pieceId, request)
+
+        assertThat(result.pieceId).isEqualTo(1L)
+        assertThat(result.studentId).isEqualTo(2L)
+        assertThat(result.totalProblems).isEqualTo(1)
+        assertThat(result.correctCount).isEqualTo(1)
+        assertThat(result.scoreRate).isEqualTo(100.0)
+        assertThat(result.results).hasSize(1)
+        assertThat(result.results[0].isCorrect).isTrue()
+
+        verify { studentPieceFinder.validateStudentHasPiece(studentId, pieceId) }
+        verify { studentAnswerFinder.hasSubmittedAnswers(studentId, pieceId) }
+        verify { pieceFinder.getWithId(pieceId) }
+        verify { studentAnswerScorer.scoreAnswers(studentId, pieceId, piece, request) }
+        verify { studentAnswerSaver.saveAll(any()) }
+    }
+
+    @Test
+    fun `이미 답변을 제출한 학습지는 재채점할 수 없다`() {
+        val pieceId = Piece.PieceId(1L)
+        val studentId = User.UserId(2L)
+        val request = com.lms.core_domain.piece.domain.request.PieceScoreRequest(
+            studentId = studentId.value,
+            answers = listOf(
+                com.lms.core_domain.piece.domain.request.StudentAnswerRequest(
+                    problemId = 1L,
+                    studentAnswer = "정답1"
+                )
+            )
+        )
+
+        every { studentPieceFinder.validateStudentHasPiece(studentId, pieceId) } just runs
+        every { studentAnswerFinder.hasSubmittedAnswers(studentId, pieceId) } returns true
+
+        assertThatThrownBy {
+            pieceService.scoreAnswers(pieceId, request)
+        }.isInstanceOf(BusinessException::class.java)
+            .hasMessage("Answers have already been submitted for this piece")
+
+        verify { studentPieceFinder.validateStudentHasPiece(studentId, pieceId) }
+        verify { studentAnswerFinder.hasSubmittedAnswers(studentId, pieceId) }
+        verify(exactly = 0) { pieceFinder.getWithId(any()) }
+        verify(exactly = 0) { studentAnswerScorer.scoreAnswers(any(), any(), any(), any()) }
+        verify(exactly = 0) { studentAnswerSaver.saveAll(any()) }
     }
 
     @Test
