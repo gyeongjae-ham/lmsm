@@ -1,9 +1,9 @@
 package com.lms.core_domain.piece.service
 
 import com.lms.core_common.enum.ProblemType
+import com.lms.core_common.exception.BusinessException
 import com.lms.core_domain.piece.domain.Piece
 import com.lms.core_domain.piece.domain.ProblemWithSequence
-import com.lms.core_common.exception.BusinessException
 import com.lms.core_domain.piece.domain.request.PieceAssignRequest
 import com.lms.core_domain.piece.domain.request.PieceCreateRequest
 import com.lms.core_domain.piece.domain.request.ProblemOrderUpdateRequest
@@ -11,6 +11,8 @@ import com.lms.core_domain.problem.domain.Problem
 import com.lms.core_domain.problem.domain.Problems
 import com.lms.core_domain.problem.service.ProblemFinder
 import com.lms.core_domain.studentpiece.domain.StudentPiece
+import com.lms.core_domain.studentanswer.service.StudentAnswerSaver
+import com.lms.core_domain.studentanswer.service.StudentAnswerScorer
 import com.lms.core_domain.studentpiece.service.StudentPieceFinder
 import com.lms.core_domain.studentpiece.service.StudentPieceSaver
 import com.lms.core_domain.user.domain.User
@@ -46,12 +48,18 @@ class PieceServiceTest {
     @MockK
     private lateinit var studentPieceSaver: StudentPieceSaver
 
+    @MockK
+    private lateinit var studentAnswerScorer: StudentAnswerScorer
+
+    @MockK
+    private lateinit var studentAnswerSaver: StudentAnswerSaver
+
     private lateinit var pieceService: PieceService
 
     @BeforeEach
     fun setUp() {
         MockKAnnotations.init(this)
-        pieceService = PieceService(problemFinder, pieceSaver, pieceFinder, userFinder, studentPieceFinder, studentPieceSaver)
+        pieceService = PieceService(problemFinder, pieceSaver, pieceFinder, userFinder, studentPieceFinder, studentPieceSaver, studentAnswerScorer, studentAnswerSaver)
     }
 
     @Test
@@ -626,7 +634,7 @@ class PieceServiceTest {
         assertThat(result.teacherId).isEqualTo(1L)
         assertThat(result.problemCount).isEqualTo(1)
         assertThat(result.problems).hasSize(1)
-        
+
         val problemResponse = result.problems[0]
         assertThat(problemResponse.problemId).isEqualTo(1L)
         assertThat(problemResponse.unitCode).isEqualTo("uc1580")
