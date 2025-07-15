@@ -18,4 +18,8 @@ class StudentAnswerFinder(
     fun hasSubmittedAnswers(studentId: User.UserId, pieceId: Piece.PieceId): Boolean {
         return studentAnswerRepository.findByStudentIdAndPieceId(studentId, pieceId).isNotEmpty()
     }
+    
+    fun findByPieceId(pieceId: Piece.PieceId): List<StudentAnswer> {
+        return studentAnswerRepository.findByPieceId(pieceId)
+    }
 }

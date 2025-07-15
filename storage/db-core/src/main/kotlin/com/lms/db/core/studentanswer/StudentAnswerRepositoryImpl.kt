@@ -21,4 +21,9 @@ class StudentAnswerRepositoryImpl(
         val entities = studentAnswerJpaRepository.findByStudentIdAndPieceId(studentId.value, pieceId.value)
         return entities.map { it.toDomain() }
     }
+
+    override fun findByPieceId(pieceId: Piece.PieceId): List<StudentAnswer> {
+        val entities = studentAnswerJpaRepository.findByPieceId(pieceId.value)
+        return entities.map { it.toDomain() }
+    }
 }

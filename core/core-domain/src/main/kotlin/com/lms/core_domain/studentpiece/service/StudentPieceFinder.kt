@@ -21,4 +21,9 @@ class StudentPieceFinder(
             throw BusinessException("Student is not assigned to this piece")
         }
     }
+    
+    fun findAssignedStudents(pieceId: Piece.PieceId): List<User.UserId> {
+        return studentPieceRepository.findByPieceId(pieceId)
+            .map { it.getStudentId() }
+    }
 }
