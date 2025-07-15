@@ -2,10 +2,12 @@ package com.lms.core_domain.piece.service
 
 import com.lms.core_common.exception.BusinessException
 import com.lms.core_domain.piece.domain.Piece
+import com.lms.core_domain.piece.domain.PieceStatistics
 import com.lms.core_domain.piece.domain.request.PieceAssignRequest
 import com.lms.core_domain.piece.domain.request.PieceCreateRequest
 import com.lms.core_domain.piece.domain.request.PieceScoreRequest
 import com.lms.core_domain.piece.domain.request.ProblemOrderUpdateRequest
+import com.lms.core_domain.piece.domain.response.PieceAnalyzeResponse
 import com.lms.core_domain.piece.domain.response.PieceAssignResponse
 import com.lms.core_domain.piece.domain.response.PieceCreateResponse
 import com.lms.core_domain.piece.domain.response.PieceProblemsResponse
@@ -141,6 +143,32 @@ class PieceService(
             correctCount = correctCount,
             scoreRate = scoreRate,
             results = results
+        )
+    }
+
+    fun analyzePiece(pieceId: Piece.PieceId, teacherId: Long): PieceAnalyzeResponse {
+        val piece = pieceFinder.getWithId(pieceId)
+        if (piece.getTeacherId() != teacherId) {
+            throw BusinessException("You do not have permission to access this piece")
+        }
+
+        val assignedStudents = studentPieceFinder.findAssignedStudents(pieceId)
+        val studentAnswers = studentAnswerFinder.findByPieceId(pieceId)
+
+        val statistics = PieceStatistics(piece, assignedStudents, studentAnswers)
+        val studentStats = statistics.calculateStudentStatistics()
+        val problemStats = statistics.calculateProblemStatistics()
+        val overallStats = statistics.calculateOverallStatistics()
+
+        return PieceAnalyzeResponse(
+            pieceId = piece.id.value,
+            pieceName = piece.getName(),
+            teacherId = piece.getTeacherId(),
+            totalAssignedStudents = overallStats.totalAssignedStudents,
+            submittedStudents = overallStats.submittedStudents,
+            submissionRate = overallStats.submissionRate,
+            studentStatistics = studentStats,
+            problemStatistics = problemStats
         )
     }
 }
