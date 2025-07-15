@@ -6,7 +6,9 @@ import com.lms.core_domain.piece.domain.request.PieceCreateRequest
 import com.lms.core_domain.piece.domain.request.ProblemOrderUpdateRequest
 import com.lms.core_domain.piece.domain.response.PieceAssignResponse
 import com.lms.core_domain.piece.domain.response.PieceCreateResponse
+import com.lms.core_domain.piece.domain.response.PieceProblemsResponse
 import com.lms.core_domain.piece.domain.response.ProblemOrderResponse
+import com.lms.core_domain.piece.domain.response.ProblemResponse
 import com.lms.core_domain.piece.domain.toAssignResponse
 import com.lms.core_domain.piece.domain.toCreateResponse
 import com.lms.core_domain.piece.domain.toUpdateOrderResponse
@@ -67,5 +69,29 @@ class PieceService(
         }
 
         return assignmentResult.toAssignResponse(piece.getName())
+    }
+
+    fun getProblemsForStudent(pieceId: Piece.PieceId, studentId: User.UserId): PieceProblemsResponse {
+        studentPieceFinder.validateStudentHasPiece(studentId, pieceId)
+        
+        val piece = pieceFinder.getWithId(pieceId)
+        
+        return PieceProblemsResponse(
+            pieceId = piece.id.value,
+            pieceName = piece.getName(),
+            teacherId = piece.getTeacherId(),
+            problemCount = piece.getProblemCount(),
+            problems = piece.getProblemsWithSequence()
+                .sortedBy { it.sequence }
+                .map { problemWithSequence ->
+                    ProblemResponse(
+                        problemId = problemWithSequence.problem.id.value,
+                        unitCode = problemWithSequence.problem.unitCode,
+                        level = problemWithSequence.problem.level,
+                        problemType = problemWithSequence.problem.problemType.name,
+                        sequence = problemWithSequence.sequence
+                    )
+                }
+        )
     }
 }

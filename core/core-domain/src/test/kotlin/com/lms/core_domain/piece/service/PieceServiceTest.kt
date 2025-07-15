@@ -3,6 +3,7 @@ package com.lms.core_domain.piece.service
 import com.lms.core_common.enum.ProblemType
 import com.lms.core_domain.piece.domain.Piece
 import com.lms.core_domain.piece.domain.ProblemWithSequence
+import com.lms.core_common.exception.BusinessException
 import com.lms.core_domain.piece.domain.request.PieceAssignRequest
 import com.lms.core_domain.piece.domain.request.PieceCreateRequest
 import com.lms.core_domain.piece.domain.request.ProblemOrderUpdateRequest
@@ -21,6 +22,7 @@ import io.mockk.just
 import io.mockk.runs
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -606,6 +608,50 @@ class PieceServiceTest {
         verify { userFinder.validateStudentsExist(studentUserIds) }
         verify { studentPieceFinder.findAssignedStudentIds(studentUserIds, pieceId) }
         verify(exactly = 0) { studentPieceSaver.saveAll(any()) }
+    }
+
+    @Test
+    fun `학생이 출제받은 학습지의 문제목록을 정상적으로 조회한다`() {
+        val pieceId = Piece.PieceId(1L)
+        val studentId = User.UserId(2L)
+        val piece = createPieceWithId(pieceId, teacherId = 1L)
+
+        every { studentPieceFinder.validateStudentHasPiece(studentId, pieceId) } just runs
+        every { pieceFinder.getWithId(pieceId) } returns piece
+
+        val result = pieceService.getProblemsForStudent(pieceId, studentId)
+
+        assertThat(result.pieceId).isEqualTo(1L)
+        assertThat(result.pieceName).isEqualTo("테스트 학습지")
+        assertThat(result.teacherId).isEqualTo(1L)
+        assertThat(result.problemCount).isEqualTo(1)
+        assertThat(result.problems).hasSize(1)
+        
+        val problemResponse = result.problems[0]
+        assertThat(problemResponse.problemId).isEqualTo(1L)
+        assertThat(problemResponse.unitCode).isEqualTo("uc1580")
+        assertThat(problemResponse.level).isEqualTo(1)
+        assertThat(problemResponse.problemType).isEqualTo("SELECTION")
+        assertThat(problemResponse.sequence).isEqualTo(10)
+
+        verify { studentPieceFinder.validateStudentHasPiece(studentId, pieceId) }
+        verify { pieceFinder.getWithId(pieceId) }
+    }
+
+    @Test
+    fun `출제받지 않은 학생이 학습지 문제를 조회하려고 하면 예외가 발생한다`() {
+        val pieceId = Piece.PieceId(1L)
+        val studentId = User.UserId(2L)
+
+        every { studentPieceFinder.validateStudentHasPiece(studentId, pieceId) } throws BusinessException("Student is not assigned to this piece")
+
+        assertThatThrownBy {
+            pieceService.getProblemsForStudent(pieceId, studentId)
+        }.isInstanceOf(BusinessException::class.java)
+            .hasMessage("Student is not assigned to this piece")
+
+        verify { studentPieceFinder.validateStudentHasPiece(studentId, pieceId) }
+        verify(exactly = 0) { pieceFinder.getWithId(any()) }
     }
 
     private fun createPieceWithId(pieceId: Piece.PieceId, teacherId: Long = 1L): Piece {
