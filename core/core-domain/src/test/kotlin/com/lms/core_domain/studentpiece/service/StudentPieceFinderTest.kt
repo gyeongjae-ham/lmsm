@@ -1,5 +1,6 @@
 package com.lms.core_domain.studentpiece.service
 
+import com.lms.core_common.exception.BusinessException
 import com.lms.core_domain.piece.domain.Piece
 import com.lms.core_domain.studentpiece.domain.StudentPiece
 import com.lms.core_domain.studentpiece.domain.repository.StudentPieceRepository
@@ -9,6 +10,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -88,5 +90,39 @@ class StudentPieceFinderTest {
         assertThat(result).hasSize(2)
         assertThat(result).containsExactlyInAnyOrder(User.UserId(1L), User.UserId(2L))
         verify { studentPieceRepository.findByStudentIdsAndPieceId(studentIds, pieceId) }
+    }
+
+    @Test
+    fun `학생이 해당 학습지에 출제받았을 때 검증이 성공한다`() {
+        val studentId = User.UserId(1L)
+        val pieceId = Piece.PieceId(1L)
+        val assignedStudentPiece = listOf(
+            StudentPiece(
+                studentPieceId = StudentPiece.StudentPieceId(1L),
+                studentId = studentId,
+                pieceId = pieceId
+            )
+        )
+
+        every { studentPieceRepository.findByStudentIdsAndPieceId(listOf(studentId), pieceId) } returns assignedStudentPiece
+
+        studentPieceFinder.validateStudentHasPiece(studentId, pieceId)
+
+        verify { studentPieceRepository.findByStudentIdsAndPieceId(listOf(studentId), pieceId) }
+    }
+
+    @Test
+    fun `학생이 해당 학습지에 출제받지 않았을 때 예외가 발생한다`() {
+        val studentId = User.UserId(1L)
+        val pieceId = Piece.PieceId(1L)
+
+        every { studentPieceRepository.findByStudentIdsAndPieceId(listOf(studentId), pieceId) } returns emptyList()
+
+        assertThatThrownBy {
+            studentPieceFinder.validateStudentHasPiece(studentId, pieceId)
+        }.isInstanceOf(BusinessException::class.java)
+            .hasMessage("Student is not assigned to this piece")
+
+        verify { studentPieceRepository.findByStudentIdsAndPieceId(listOf(studentId), pieceId) }
     }
 }
