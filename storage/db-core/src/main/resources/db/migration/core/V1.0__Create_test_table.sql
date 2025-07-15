@@ -1,4 +1,4 @@
-CREATE TABLE users
+CREATE TABLE IF NOT EXISTS users
 (
     id         BIGINT       NOT NULL AUTO_INCREMENT,
     email      VARCHAR(255) NOT NULL,
@@ -11,4 +11,4 @@ CREATE TABLE users
     PRIMARY KEY (id),
     UNIQUE (email),
     UNIQUE (username)
-);
+    );

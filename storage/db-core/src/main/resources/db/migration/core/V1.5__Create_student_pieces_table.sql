@@ -1,4 +1,4 @@
-CREATE TABLE student_pieces
+CREATE TABLE IF NOT EXISTS student_pieces
 (
     id         BIGINT    NOT NULL AUTO_INCREMENT,
     student_id BIGINT    NOT NULL,
