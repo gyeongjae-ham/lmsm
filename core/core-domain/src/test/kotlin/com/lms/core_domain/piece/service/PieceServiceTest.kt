@@ -743,6 +743,67 @@ class PieceServiceTest {
     }
 
     @Test
+    fun `학습지 통계 분석이 성공적으로 처리된다`() {
+        val pieceId = Piece.PieceId(1L)
+        val teacherId = 1L
+        val piece = createPieceWithId(pieceId, teacherId)
+        val assignedStudents = listOf(User.UserId(2L), User.UserId(3L))
+        val studentAnswers = listOf(
+            com.lms.core_domain.studentanswer.domain.StudentAnswer(
+                studentId = User.UserId(2L),
+                pieceId = pieceId,
+                problemId = Problem.ProblemId(1L),
+                studentAnswer = "정답",
+                isCorrect = true
+            ),
+            com.lms.core_domain.studentanswer.domain.StudentAnswer(
+                studentId = User.UserId(3L),
+                pieceId = pieceId,
+                problemId = Problem.ProblemId(1L),
+                studentAnswer = "오답",
+                isCorrect = false
+            )
+        )
+
+        every { pieceFinder.getWithId(pieceId) } returns piece
+        every { studentPieceFinder.findAssignedStudents(pieceId) } returns assignedStudents
+        every { studentAnswerFinder.findByPieceId(pieceId) } returns studentAnswers
+
+        val result = pieceService.analyzePiece(pieceId, teacherId)
+
+        assertThat(result.pieceId).isEqualTo(1L)
+        assertThat(result.pieceName).isEqualTo("테스트 학습지")
+        assertThat(result.teacherId).isEqualTo(1L)
+        assertThat(result.totalAssignedStudents).isEqualTo(2)
+        assertThat(result.submittedStudents).isEqualTo(2)
+        assertThat(result.submissionRate).isEqualTo(100.0)
+        assertThat(result.studentStatistics).hasSize(2)
+        assertThat(result.problemStatistics).hasSize(1)
+
+        verify { pieceFinder.getWithId(pieceId) }
+        verify { studentPieceFinder.findAssignedStudents(pieceId) }
+        verify { studentAnswerFinder.findByPieceId(pieceId) }
+    }
+
+    @Test
+    fun `다른 선생님의 학습지 통계는 조회할 수 없다`() {
+        val pieceId = Piece.PieceId(1L)
+        val teacherId = 2L // 다른 선생님
+        val piece = createPieceWithId(pieceId, teacherId = 1L) // 원래 선생님은 1L
+
+        every { pieceFinder.getWithId(pieceId) } returns piece
+
+        assertThatThrownBy {
+            pieceService.analyzePiece(pieceId, teacherId)
+        }.isInstanceOf(BusinessException::class.java)
+            .hasMessage("학습지에 대한 권한이 없습니다.")
+
+        verify { pieceFinder.getWithId(pieceId) }
+        verify(exactly = 0) { studentPieceFinder.findAssignedStudents(any()) }
+        verify(exactly = 0) { studentAnswerFinder.findByPieceId(any()) }
+    }
+
+    @Test
     fun `출제받지 않은 학생이 학습지 문제를 조회하려고 하면 예외가 발생한다`() {
         val pieceId = Piece.PieceId(1L)
         val studentId = User.UserId(2L)

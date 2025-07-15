@@ -22,6 +22,11 @@ class StudentPieceRepositoryImpl(
         return studentPieceJpaRepository.findByStudentIdInAndPieceId(ids, pieceId.value)
             .map { it.toDomain() }
     }
+
+    override fun findByPieceId(pieceId: Piece.PieceId): List<StudentPiece> {
+        return studentPieceJpaRepository.findByPieceId(pieceId.value)
+            .map { it.toDomain() }
+    }
 }
 
 fun StudentPiece.toEntity(): StudentPieceEntity {
