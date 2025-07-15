@@ -3,16 +3,20 @@ package com.lms.core_domain.piece.service
 import com.lms.core_domain.piece.domain.Piece
 import com.lms.core_domain.piece.domain.request.PieceAssignRequest
 import com.lms.core_domain.piece.domain.request.PieceCreateRequest
+import com.lms.core_domain.piece.domain.request.PieceScoreRequest
 import com.lms.core_domain.piece.domain.request.ProblemOrderUpdateRequest
 import com.lms.core_domain.piece.domain.response.PieceAssignResponse
 import com.lms.core_domain.piece.domain.response.PieceCreateResponse
 import com.lms.core_domain.piece.domain.response.PieceProblemsResponse
+import com.lms.core_domain.piece.domain.response.PieceScoreResponse
 import com.lms.core_domain.piece.domain.response.ProblemOrderResponse
 import com.lms.core_domain.piece.domain.response.ProblemResponse
 import com.lms.core_domain.piece.domain.toAssignResponse
 import com.lms.core_domain.piece.domain.toCreateResponse
 import com.lms.core_domain.piece.domain.toUpdateOrderResponse
 import com.lms.core_domain.problem.service.ProblemFinder
+import com.lms.core_domain.studentanswer.service.StudentAnswerSaver
+import com.lms.core_domain.studentanswer.service.StudentAnswerScorer
 import com.lms.core_domain.studentpiece.domain.StudentPiece
 import com.lms.core_domain.studentpiece.service.StudentPieceFinder
 import com.lms.core_domain.studentpiece.service.StudentPieceSaver
@@ -27,7 +31,9 @@ class PieceService(
     private val pieceFinder: PieceFinder,
     private val userFinder: UserFinder,
     private val studentPieceFinder: StudentPieceFinder,
-    private val studentPieceSaver: StudentPieceSaver
+    private val studentPieceSaver: StudentPieceSaver,
+    private val studentAnswerScorer: StudentAnswerScorer,
+    private val studentAnswerSaver: StudentAnswerSaver
 ) {
     fun create(request: PieceCreateRequest): PieceCreateResponse {
         val problems = problemFinder.getProblemsForPiece(problemIds = request.problemIds)
@@ -73,9 +79,9 @@ class PieceService(
 
     fun getProblemsForStudent(pieceId: Piece.PieceId, studentId: User.UserId): PieceProblemsResponse {
         studentPieceFinder.validateStudentHasPiece(studentId, pieceId)
-        
+
         val piece = pieceFinder.getWithId(pieceId)
-        
+
         return PieceProblemsResponse(
             pieceId = piece.id.value,
             pieceName = piece.getName(),
@@ -92,6 +98,41 @@ class PieceService(
                         sequence = problemWithSequence.sequence
                     )
                 }
+        )
+    }
+
+    fun scoreAnswers(pieceId: Piece.PieceId, request: PieceScoreRequest): PieceScoreResponse {
+        val studentId = User.UserId(request.studentId)
+
+        studentPieceFinder.validateStudentHasPiece(studentId = studentId, pieceId = pieceId)
+        val piece = pieceFinder.getWithId(pieceId)
+
+        val scoreResults =
+            studentAnswerScorer.scoreAnswers(
+                studentId = studentId,
+                pieceId = pieceId,
+                piece = piece,
+                request = request
+            )
+
+        val studentAnswers = scoreResults.map { it.second }
+        studentAnswerSaver.saveAll(studentAnswers)
+
+        val results = scoreResults.map { it.first }
+        val correctCount = results.count { it.isCorrect }
+        val scoreRate = if (results.isNotEmpty()) {
+            (correctCount.toDouble() / results.size * 100)
+        } else {
+            0.0
+        }
+
+        return PieceScoreResponse(
+            pieceId = pieceId.value,
+            studentId = studentId.value,
+            totalProblems = results.size,
+            correctCount = correctCount,
+            scoreRate = scoreRate,
+            results = results
         )
     }
 }

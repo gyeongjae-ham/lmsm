@@ -3,13 +3,17 @@ package com.lms.api.piece
 import com.lms.api.problem.BaseControllerTest
 import com.lms.core_domain.piece.domain.response.PieceAssignResponse
 import com.lms.core_domain.piece.domain.response.PieceProblemsResponse
+import com.lms.core_domain.piece.domain.response.PieceScoreResponse
 import com.lms.core_domain.piece.domain.response.ProblemResponse
+import com.lms.core_domain.piece.domain.response.ScoreResultResponse
 import com.lms.core_domain.piece.service.PieceService
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import org.junit.jupiter.api.Test
+import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
@@ -151,6 +155,88 @@ class PieceControllerTest : BaseControllerTest() {
         mockMvc.perform(
             get("/api/v1/pieces/{pieceId}/problems", pieceId)
             // userId 파라미터 누락
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `학습지 채점 API가 정상적으로 처리된다`() {
+        val pieceId = 1L
+        val studentId = 2L
+        
+        val response = PieceScoreResponse(
+            pieceId = pieceId,
+            studentId = studentId,
+            totalProblems = 2,
+            correctCount = 1,
+            scoreRate = 50.0,
+            results = listOf(
+                ScoreResultResponse(
+                    problemId = 1L,
+                    studentAnswer = "정답1",
+                    correctAnswer = "정답1",
+                    isCorrect = true
+                ),
+                ScoreResultResponse(
+                    problemId = 2L,
+                    studentAnswer = "오답2",
+                    correctAnswer = "정답2",
+                    isCorrect = false
+                )
+            )
+        )
+
+        every { pieceService.scoreAnswers(any(), any()) } returns response
+
+        val requestBody = """
+            {
+                "studentId": $studentId,
+                "answers": [
+                    {
+                        "problemId": 1,
+                        "studentAnswer": "정답1"
+                    },
+                    {
+                        "problemId": 2,
+                        "studentAnswer": "오답2"
+                    }
+                ]
+            }
+        """.trimIndent()
+
+        mockMvc.perform(
+            put("/api/v1/pieces/{pieceId}/score", pieceId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.data.pieceId").value(pieceId))
+            .andExpect(jsonPath("$.data.studentId").value(studentId))
+            .andExpect(jsonPath("$.data.totalProblems").value(2))
+            .andExpect(jsonPath("$.data.correctCount").value(1))
+            .andExpect(jsonPath("$.data.scoreRate").value(50.0))
+            .andExpect(jsonPath("$.data.results").isArray)
+            .andExpect(jsonPath("$.data.results[0].problemId").value(1L))
+            .andExpect(jsonPath("$.data.results[0].isCorrect").value(true))
+            .andExpect(jsonPath("$.data.results[1].problemId").value(2L))
+            .andExpect(jsonPath("$.data.results[1].isCorrect").value(false))
+    }
+
+    @Test
+    fun `채점 요청에서 필수 필드가 누락되면 400 에러가 발생한다`() {
+        val pieceId = 1L
+        val requestBody = """
+            {
+                "studentId": 2,
+                "answers": []
+            }
+        """.trimIndent()
+
+        mockMvc.perform(
+            put("/api/v1/pieces/{pieceId}/score", pieceId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
         )
             .andExpect(status().isBadRequest)
     }

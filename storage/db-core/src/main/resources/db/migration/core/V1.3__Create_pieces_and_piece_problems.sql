@@ -1,4 +1,4 @@
-CREATE TABLE pieces
+CREATE TABLE IF NOT EXISTS pieces
 (
     id         BIGINT PRIMARY KEY AUTO_INCREMENT,
     name       VARCHAR(255) NOT NULL,
@@ -7,7 +7,7 @@ CREATE TABLE pieces
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE piece_problems
+CREATE TABLE IF NOT EXISTS piece_problems
 (
     id         BIGINT PRIMARY KEY AUTO_INCREMENT,
     piece_id   BIGINT  NOT NULL,

@@ -1,4 +1,4 @@
-CREATE TABLE problems
+CREATE TABLE IF NOT EXISTS problems
 (
     id           BIGINT       NOT NULL AUTO_INCREMENT,
     unit_code    VARCHAR(20)  NOT NULL,
