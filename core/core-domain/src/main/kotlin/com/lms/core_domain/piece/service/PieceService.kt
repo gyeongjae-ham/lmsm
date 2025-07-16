@@ -58,6 +58,7 @@ class PieceService(
         return updatedPiece.toUpdateOrderResponse()
     }
 
+    // 이미 배정된 학생은 제외하고 새로운 학생들만 배정하는 중복 배정 방지 로직
     fun assignToStudents(pieceId: Piece.PieceId, request: PieceAssignRequest): PieceAssignResponse {
         val piece = pieceFinder.getWithId(pieceId)
 
@@ -106,6 +107,7 @@ class PieceService(
         )
     }
 
+    // 병렬 처리를 통한 채점 및 중복 제출 방지 로직
     fun scoreAnswers(pieceId: Piece.PieceId, request: PieceScoreRequest): PieceScoreResponse {
         val studentId = User.UserId(request.studentId)
 
@@ -146,6 +148,7 @@ class PieceService(
         )
     }
 
+    // 선생님 권한 검증 및 통계 계산 로직
     fun analyzePiece(pieceId: Piece.PieceId, teacherId: Long): PieceAnalyzeResponse {
         val piece = pieceFinder.getWithId(pieceId)
         if (piece.getTeacherId() != teacherId) {
