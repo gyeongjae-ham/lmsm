@@ -15,6 +15,7 @@ class ProblemGetService(
     private val problemRatioCalculator: ProblemRatioCalculator,
     private val problemRepository: ProblemRepository
 ) {
+    // 난이도별 비율 계산 및 문제 유형 필터링을 통한 문제 선별 로직
     @Transactional(readOnly = true)
     fun getProblemsWithCondition(request: ProblemGetRequest): List<ProblemFilterResponse> {
         val ratioResult = problemRatioCalculator.calculate(request.level, request.totalCount)

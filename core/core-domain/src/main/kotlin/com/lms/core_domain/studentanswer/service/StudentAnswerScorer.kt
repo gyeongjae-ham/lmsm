@@ -14,6 +14,7 @@ import java.util.concurrent.Executors
 class StudentAnswerScorer {
     private val executor = Executors.newVirtualThreadPerTaskExecutor()
 
+    // 가상 스레드를 활용한 병렬 처리로 여러 문제를 동시에 채점하는 로직
     fun scoreAnswers(
         studentId: User.UserId,
         pieceId: Piece.PieceId,
