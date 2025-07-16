@@ -29,7 +29,7 @@ storage:
   datasource:
     core:
       driver-class-name: org.h2.Driver
-      jdbc-url: jdbc:h2:file:~/Desktop/lms-db
+      jdbc-url: jdbc:h2:mem:lms-db
       username: sa
       password:
 

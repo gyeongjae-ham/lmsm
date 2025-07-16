@@ -1,4 +1,4 @@
-CREATE TABLE unit_codes
+CREATE TABLE IF NOT EXISTS unit_codes
 (
     id         BIGINT       NOT NULL AUTO_INCREMENT,
     unit_code  VARCHAR(20)  NOT NULL,
